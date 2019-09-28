@@ -1,0 +1,66 @@
+.criteriaCheck-message-accented {
+  font-weight: bold;
+}
+
+.criteriaCheck-message-big {
+  font-weight: normal;
+  margin: 0.5em 0;
+}
+
+.criteriaCheck-message-big + .criteriaCheck-message-big {
+  margin-top: -0.25em;
+}
+
+.criteriaCheck-linksBlock,
+.criteriaCheck-message-big {
+  font-size: 120%;
+}
+
+.criteriaCheck-icon {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  background-position: center center;
+  background-size: 20px 20px;
+  background-repeat: no-repeat;
+  margin-right: 0.5em;
+  vertical-align: middle;
+}
+
+.criteriaCheck-icon + .criteriaCheck-icon {
+  margin-left: -0.5em;
+}
+
+.criteriaCheck-message-big .criteriaCheck-icon {
+  width: 24px;
+  height: 24px;
+  background-size: 24px 24px;
+}
+
+.criteriaCheck-icon-check {
+  background-image: url("https://upload.wikimedia.org/wikipedia/commons/f/f6/OOjs_UI_icon_check-constructive.svg");
+}
+
+.criteriaCheck-icon-close {
+  background-image: url("https://upload.wikimedia.org/wikipedia/commons/7/77/OOjs_UI_icon_close-ltr-destructive.svg");
+}
+
+.criteriaCheck-icon-help {
+  background-image: url("https://upload.wikimedia.org/wikipedia/commons/b/b2/OOjs_UI_icon_help-ltr.svg");
+}
+
+.criteriaCheck-icon-error {
+  background-image: url("https://upload.wikimedia.org/wikipedia/commons/4/4e/OOjs_UI_icon_error-destructive.svg");
+}
+
+.criteriaCheck-icon-loading {
+  background-image: url("https://upload.wikimedia.org/wikipedia/commons/d/de/Ajax-loader.gif");
+}
+
+.criteriaCheck-icon-warning {
+  background-image: url("https://upload.wikimedia.org/wikipedia/commons/3/3b/OOjs_UI_icon_alert-warning.svg");
+}
+
+.criteriaCheck-sandbox {
+  display: none;
+}
