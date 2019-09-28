@@ -191,8 +191,8 @@ export default class User {
         adrlimit = Math.min(
           cc.apiRateLimit,
           config.filterVotes
-            ? cc.util.calcOptimalLimit(enoughEditCount - contribs.length)
-            : enoughEditCount - contribs.length
+            ? cc.util.calcOptimalLimit(enoughEditCount - deletedContribs.length)
+            : enoughEditCount - deletedContribs.length
         );
       } else {
         adrlimit = cc.apiRateLimit;
@@ -202,8 +202,8 @@ export default class User {
         list: 'alldeletedrevisions',
         adrprop: 'timestamp',
         adruser: this.name,
-        adrstart: config.periodStart.toISOString(),
-        adrend: config.periodEnd.toISOString(),
+        adrstart: config.periodStart && config.periodStart.toISOString(),
+        adrend: config.periodEnd && config.periodEnd.toISOString(),
         adrdir: 'newer',
         adrlimit,
         adrcontinue,
@@ -312,7 +312,7 @@ export default class User {
         editCount: edits.length,
       };
     } else if (config.deleted && isCurrentUserSysop) {
-      const deletedContribs = await this.requestDeletedContribs(config);
+      const deletedContribs = await this.requestDeletedContribs(config, safeValue - edits.length);
       edits.push(...deletedContribs);
     }
 
