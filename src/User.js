@@ -229,26 +229,26 @@ export default class User {
     return deletedContribs;
   }
 
-  async collectActions(config, enoughActionsCount) {
+  async collectActions(config, enoughActionCount) {
     const actions = [];
     if (config.deleted == undefined) {
       config.deleted = true;
     }
-    const contribs = await this.requestContribs(config, enoughActionsCount);
+    const contribs = await this.requestContribs(config, enoughActionCount);
     actions.push(...contribs);
 
     if (config.deleted &&
       isCurrentUserSysop &&
-      (!enoughActionsCount || actions.length < enoughActionsCount)
+      (!enoughActionCount || actions.length < enoughActionCount)
     ) {
       const deletedContribs = await this.requestDeletedContribs(
         config,
-        enoughActionsCount && enoughActionsCount - actions.length
+        enoughActionCount && enoughActionCount - actions.length
       );
       actions.push(...deletedContribs);
     }
 
-    if (!enoughActionsCount || actions.length < enoughActionsCount) {
+    if (!enoughActionCount || actions.length < enoughActionCount) {
       // Логируемые действия
       let lecontinue;
       // [[Википедия:Патрулирование#Обозначения действий патрулирования в API]]
@@ -271,7 +271,7 @@ export default class User {
         entries = entries.filter(cc.util.isntAutomaticAction);
         actions.push(...entries);
         lecontinue = data && data.continue && data.continue.lecontinue;
-      } while (lecontinue && (!enoughActionsCount || actions.length < enoughActionsCount));
+      } while (lecontinue && (!enoughActionCount || actions.length < enoughActionCount));
     }
 
     actions.sort((a, b) => {
@@ -367,8 +367,8 @@ export default class User {
 
     return {
       result: registrationDate <= config.value ? 'meets' : 'notMeets',
-      overallEditCount,
       registrationDate,
+      overallEditCount,
     };
   }
 
@@ -576,13 +576,13 @@ export default class User {
     if (actions.length < config.value) {
       return {
         result: isCurrentUserSysop ? 'notMeets' : 'notEnoughRights',
-        actionsCount: actions.length,
+        actionCount: actions.length,
         actions,
       };
     } else {
       return {
         result: 'meets',
-        actionsCount: actions.length,
+        actionCount: actions.length,
         actions,
       };
     }
