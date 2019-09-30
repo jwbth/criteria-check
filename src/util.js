@@ -1,8 +1,8 @@
-import { subSeconds, subDays, subMonths, subYears } from 'date-fns';
+import { subSeconds, subDays, subMonths, subYears, addDays } from 'date-fns';
 
 // Чтобы сделать возможным автоматическую генерации кода вызова этих функций без использования eval
 // (см. https://stackoverflow.com/questions/9464921/dynamically-call-local-function-in-javascript)
-const dateFns = { subDays, subMonths, subYears, addDays };
+const dateFns = { subDays, subMonths, subYears };
 
 const captureUserRegexp = /(?:Участник:|Участница:|Обсуждение_участника:|Обсуждение_участницы:|Служебная:Вклад\/)([^#\/]+)/;
 
@@ -19,7 +19,6 @@ export default {
       }
       date = new Date(date);
     }
-
     if (addOneDay) {
       date = addDays(date, 1);
     }

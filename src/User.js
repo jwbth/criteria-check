@@ -25,16 +25,18 @@ export default class User {
         : 500;
     }
 
-    const config = Object.assign({}, criterion);
-    delete config.name;
-    delete config.text;
+    const options = Object.assign({}, criterion);
+    delete options.name;
+    delete options.text;
     let result;
     if (criterion.needsManualCheck) {
       result = { result: 'needsManualCheck' };
     } else if (this.missing) {
       result = { result: 'userMissing' };
     } else if (this[criterion.name]) {
-      result = await this[criterion.name](config);
+      result = await this[criterion.name](options);
+    } else if (cc.customHandlers[criterion.name]) {
+      result = await cc.customHandlers[criterion.name](this, options);
     } else {
       throw new Error(`Не найден критерий ${criterion.name}.`);
     }
@@ -44,8 +46,11 @@ export default class User {
   }
 
   async check(criteria) {
-    let results;
+    if (!Array.isArray(criteria)) {
+      criteria = [criteria];
+    }
 
+    let results;
     while (true) {
       results = await Promise.all(criteria.map((criterion) => this.checkOne(criterion)));
 
@@ -56,9 +61,7 @@ export default class User {
       // критериям, а новый нет, скрипт ошибается. Мы жертвуем возможностью такого стечения
       // обстоятельств по причине того, что его вероятность крайне мала.
       if (!this.missing &&
-        !results.some((result) => (
-          result.result === 'notMeets' || result.result === 'notEnoughRights'
-        ))
+        !results.some((result) => ['notMeets', 'notEnoughRights'].includes(result.result))
       ) {
         break;
       }
@@ -144,7 +147,7 @@ export default class User {
     }
   }
 
-  async requestContribs(config, enoughEditCount) {
+  async requestContribs(options, enoughEditCount) {
     const contribs = [];
     let uccontinue;
     let doContinue;
@@ -153,7 +156,7 @@ export default class User {
       if (enoughEditCount) {
         uclimit = Math.min(
           cc.apiRateLimit,
-          config.filterVotes
+          options.filterVotes
             ? cc.util.calcOptimalLimit(enoughEditCount - contribs.length)
             : enoughEditCount - contribs.length
         );
@@ -164,9 +167,9 @@ export default class User {
         list: 'usercontribs',
         ucprop: 'title|timestamp',
         ucuser: this.name,
-        ucnamespace: config.ns,
-        ucstart: config.periodStart && config.periodStart.toISOString(),
-        ucend: config.periodEnd && config.periodEnd.toISOString(),
+        ucnamespace: options.ns,
+        ucstart: options.periodStart && options.periodStart.toISOString(),
+        ucend: options.periodEnd && options.periodEnd.toISOString(),
         ucdir: 'newer',
         uclimit,
         uccontinue,
@@ -174,13 +177,13 @@ export default class User {
       });
       let entries = data && data.query && data.query.usercontribs;
       if (!entries) break;
-      if (config.filterVotes) {
+      if (options.filterVotes) {
         entries = entries.filter(cc.util.isntVotePage);
       }
       contribs.push(...entries);
       uccontinue = data && data.continue && data.continue.uccontinue;
       doContinue = uccontinue && (!enoughEditCount || contribs.length < enoughEditCount);
-      if (config.filterVotes && uclimit < cc.apiRateLimit && doContinue) {
+      if (options.filterVotes && uclimit < cc.apiRateLimit && doContinue) {
         console.info(`Неоптимальный расчёт в функции calcOptimalLimit: запрошено ${uclimit}, нашлось ${entries.length}, пришлось запрашивать ещё записи. Участник ${this.name}.`, entries);
       }
     } while (doContinue);
@@ -188,7 +191,7 @@ export default class User {
     return contribs;
   }
 
-  async requestDeletedContribs(config, enoughEditCount) {
+  async requestDeletedContribs(options, enoughEditCount) {
     const deletedContribs = [];
     let adrcontinue;
     let doContinue;
@@ -197,7 +200,7 @@ export default class User {
       if (enoughEditCount) {
         adrlimit = Math.min(
           cc.apiRateLimit,
-          config.filterVotes
+          options.filterVotes
             ? cc.util.calcOptimalLimit(enoughEditCount - deletedContribs.length)
             : enoughEditCount - deletedContribs.length
         );
@@ -209,8 +212,8 @@ export default class User {
         list: 'alldeletedrevisions',
         adrprop: 'timestamp',
         adruser: this.name,
-        adrstart: config.periodStart && config.periodStart.toISOString(),
-        adrend: config.periodEnd && config.periodEnd.toISOString(),
+        adrstart: options.periodStart && options.periodStart.toISOString(),
+        adrend: options.periodEnd && options.periodEnd.toISOString(),
         adrdir: 'newer',
         adrlimit,
         adrcontinue,
@@ -218,7 +221,7 @@ export default class User {
       });
       let entries = data && data.query && data.query.alldeletedrevisions;
       if (!entries) break;
-      if (config.filterVotes) {
+      if (options.filterVotes) {
         entries = entries.filter(cc.util.isntVotePage);
       }
       const revisions = [];
@@ -228,7 +231,7 @@ export default class User {
       deletedContribs.push(...revisions);
       adrcontinue = data && data.continue && data.continue.adrcontinue;
       doContinue = adrcontinue && (!enoughEditCount || deletedContribs.length < enoughEditCount);
-      if (config.filterVotes && adrlimit < cc.apiRateLimit && doContinue) {
+      if (options.filterVotes && adrlimit < cc.apiRateLimit && doContinue) {
         console.info(`Неоптимальный расчёт в функции calcOptimalLimit: запрошено ${adrlimit}, нашлось ${revisions.length}, пришлось запрашивать ещё записи. Участник ${this.name}.`, entries);
       }
     } while (doContinue);
@@ -236,20 +239,20 @@ export default class User {
     return deletedContribs;
   }
 
-  async collectActions(config, enoughActionCount) {
+  async collectActions(options, enoughActionCount) {
     const actions = [];
-    if (config.deleted == undefined) {
-      config.deleted = true;
+    if (options.deleted == undefined) {
+      options.deleted = true;
     }
-    const contribs = await this.requestContribs(config, enoughActionCount);
+    const contribs = await this.requestContribs(options, enoughActionCount);
     actions.push(...contribs);
 
-    if (config.deleted &&
+    if (options.deleted &&
       isCurrentUserSysop &&
       (!enoughActionCount || actions.length < enoughActionCount)
     ) {
       const deletedContribs = await this.requestDeletedContribs(
-        config,
+        options,
         enoughActionCount && enoughActionCount - actions.length
       );
       actions.push(...deletedContribs);
@@ -266,8 +269,8 @@ export default class User {
           list: 'logevents',
           leprop: 'timestamp|type',
           leuser: this.name,
-          lestart: config.periodStart && config.periodStart.toISOString(),
-          leend: config.periodEnd && config.periodEnd.toISOString(),
+          lestart: options.periodStart && options.periodStart.toISOString(),
+          leend: options.periodEnd && options.periodEnd.toISOString(),
           ledir: 'newer',
           lelimit: cc.apiRateLimit,
           lecontinue,
@@ -297,29 +300,29 @@ export default class User {
 
   /* Функции критериев */
 
-  async editCountNotLess(config) {
-    config.periodStart = cc.util.prepareDate(config.periodStart);
-    config.periodEnd = cc.util.prepareDate(config.periodEnd, true);
-    config.meaningful = Boolean(Number(config.meaningful));
-    config.deleted = Boolean(Number(config.deleted));
-    if (config.meaningful && config.margin == undefined) {
-      config.margin = 0.5;
+  async editCountNotLess(options) {
+    options.periodStart = cc.util.prepareDate(options.periodStart);
+    options.periodEnd = cc.util.prepareDate(options.periodEnd, true);
+    options.meaningful = Boolean(Number(options.meaningful));
+    options.deleted = Boolean(Number(options.deleted));
+    if (options.meaningful && options.margin == undefined) {
+      options.margin = 0.5;
     }
-    if (config.margin == undefined) {
-      config.margin = 0;
+    if (options.margin == undefined) {
+      options.margin = 0;
     }
 
-    const safeValue = Math.round(config.value * (1 + config.margin));
+    const safeValue = Math.round(options.value * (1 + options.margin));
 
-    const edits = await this.requestContribs(config, safeValue);
+    const edits = await this.requestContribs(options, safeValue);
 
     if (edits.length >= safeValue) {
       return {
         result: 'meets',
         editCount: edits.length,
       };
-    } else if (config.deleted && isCurrentUserSysop) {
-      const deletedContribs = await this.requestDeletedContribs(config, safeValue - edits.length);
+    } else if (options.deleted && isCurrentUserSysop) {
+      const deletedContribs = await this.requestDeletedContribs(options, safeValue - edits.length);
       edits.push(...deletedContribs);
     }
 
@@ -329,23 +332,23 @@ export default class User {
         editCount: edits.length,
         edits,
       };
-    } else if (edits.length >= config.value) {
+    } else if (edits.length >= options.value) {
       return {
-        result: !config.deleted || isCurrentUserSysop ? 'possiblyMeets' : 'notEnoughRights',
+        result: !options.deleted || isCurrentUserSysop ? 'possiblyMeets' : 'notEnoughRights',
         editCount: edits.length,
         edits,
       };
     } else {
       return {
-        result: !config.deleted || isCurrentUserSysop ? 'notMeets' : 'notEnoughRights',
+        result: !options.deleted || isCurrentUserSysop ? 'notMeets' : 'notEnoughRights',
         editCount: edits.length,
         edits,
       };
     }
   }
 
-  async registrationDateNotLater(config) {
-    config.value = cc.util.prepareDate(config.value, true);
+  async registrationDateNotLater(options) {
+    options.value = cc.util.prepareDate(options.value, true);
 
     const entry = await this.getUserInfo();
     if (this.missing) {
@@ -373,22 +376,22 @@ export default class User {
     }
 
     return {
-      result: registrationDate <= config.value ? 'meets' : 'notMeets',
+      result: registrationDate <= options.value ? 'meets' : 'notMeets',
       registrationDate,
       overallEditCount,
     };
   }
 
-  async editsBetweenDates(config) {
-    config.periodStart = cc.util.prepareDate(config.periodStart || config.start || config.startValue);
-    config.periodEnd = cc.util.prepareDate(config.periodEnd || config.end || config.endValue, true);
+  async editsBetweenDates(options) {
+    options.periodStart = cc.util.prepareDate(options.periodStart || options.start || options.startValue);
+    options.periodEnd = cc.util.prepareDate(options.periodEnd || options.end || options.endValue, true);
 
     const data = await new mw.Api().get({
       action: 'query',
       list: 'usercontribs',
       ucuser: this.name,
-      ucstart: config.periodStart.toISOString(),
-      ucend: config.periodEnd.toISOString(),
+      ucstart: options.periodStart.toISOString(),
+      ucend: options.periodEnd.toISOString(),
       ucdir: 'newer',
       uclimit: 1,
       formatversion: 2,
@@ -404,10 +407,10 @@ export default class User {
     }
   }
 
-  async hadFlagFor(config) {
-    config.referenceDate = cc.util.prepareDate(config.referenceDate, true);
-    if (!config.flags) {
-      config.flags = config.flag && [config.flag];
+  async hadFlagFor(options) {
+    options.referenceDate = cc.util.prepareDate(options.referenceDate, true);
+    if (!options.flags) {
+      options.flags = options.flag && [options.flag];
     }
 
     let lecontinue;
@@ -418,7 +421,7 @@ export default class User {
         list: 'logevents',
         letype: 'rights',
         letitle: 'Участник:' + this.name,
-        leend: config.referenceDate && config.referenceDate.toISOString(),
+        leend: options.referenceDate && options.referenceDate.toISOString(),
         lelimit: cc.apiRateLimit,
         ledir: 'newer',
         formatversion: 2,
@@ -431,7 +434,7 @@ export default class User {
 
     let multiplierMin;
     let multiplierMax;
-    switch (config.unit) {
+    switch (options.unit) {
       case 'year':
       case 'years':
         multiplierMin = 1000 * 60 * 60 * 24 * 365;
@@ -446,13 +449,13 @@ export default class User {
       case 'days':
         multiplierMin = multiplierMax = 1000 * 60 * 60 * 24;
     }
-    const neededPeriodMin = multiplierMin * config.value;
-    const neededPeriodMax = multiplierMax * config.value;
+    const neededPeriodMin = multiplierMin * options.value;
+    const neededPeriodMax = multiplierMax * options.value;
 
     let periodsCount = 0;
     let result;
 
-    for (const flag of config.flags) {
+    for (const flag of options.flags) {
       let period = 0;
       let lastEndedHavingFlag;
       let lastStartedHavingFlag;
@@ -485,7 +488,7 @@ export default class User {
       } else if (periodsCount === 1) {
         // Если период всего один, вычисляем по классическим правилам для дат (например, 1 месяц
         // назад для 31 марта — 28 февраля в невисокосном году)
-        const subFunc = cc.util.createSubFunc(config.value, config.unit);
+        const subFunc = cc.util.createSubFunc(options.value, options.unit);
         if (subFunc(lastEndedHavingFlag) > lastStartedHavingFlag) {
           return {
             result: 'meets',
@@ -507,12 +510,12 @@ export default class User {
     return result || { result: 'notMeets' };
   }
 
-  async notLostFlagInLast(config) {
-    config.referenceDate = cc.util.prepareDate(config.referenceDate || new Date());
-    const subFunc = cc.util.createSubFunc(config.value, config.unit);
+  async notLostFlagInLast(options) {
+    options.referenceDate = cc.util.prepareDate(options.referenceDate || new Date());
+    const subFunc = cc.util.createSubFunc(options.value, options.unit);
 
-    if (!config.flags) {
-      config.flags = config.flag && [config.flag];
+    if (!options.flags) {
+      options.flags = options.flag && [options.flag];
     }
 
     let lecontinue;
@@ -523,8 +526,8 @@ export default class User {
         list: 'logevents',
         letype: 'rights',
         letitle: 'Участник:' + this.name,
-        lestart: subFunc(config.referenceDate).toISOString(),
-        leend: config.referenceDate.toISOString(),
+        lestart: subFunc(options.referenceDate).toISOString(),
+        leend: options.referenceDate.toISOString(),
         lelimit: cc.apiRateLimit,
         ledir: 'newer',
         formatversion: 2,
@@ -535,7 +538,7 @@ export default class User {
       lecontinue = data && data.continue && data.continue.lecontinue;
     } while (lecontinue);
 
-    for (const flag of config.flags) {
+    for (const flag of options.flags) {
       for (const entry of entries) {
         const oldGroups = entry.params && entry.params.oldgroups;
         const newGroups = entry.params && entry.params.newgroups;
@@ -552,16 +555,16 @@ export default class User {
     return { result: 'meets' };
   }
 
-  async notInactiveFor(config) {
-    config.periodStart = cc.util.prepareDate(config.periodStart);
-    config.periodEnd = cc.util.prepareDate(config.periodEnd, true);
-    const subFunc = cc.util.createSubFunc(config.value, config.unit);
+  async notInactiveFor(options) {
+    options.periodStart = cc.util.prepareDate(options.periodStart);
+    options.periodEnd = cc.util.prepareDate(options.periodEnd, true);
+    const subFunc = cc.util.createSubFunc(options.value, options.unit);
 
-    const actions = await this.collectActions(config);
+    const actions = await this.collectActions(options);
 
     for (let i = 0; i <= actions.length; i++) {
-      const previousDate = i === 0 ? config.periodStart : new Date(actions[i - 1].timestamp);
-      const currentDate = i === actions.length ? config.periodEnd : new Date(actions[i].timestamp);
+      const previousDate = i === 0 ? options.periodStart : new Date(actions[i - 1].timestamp);
+      const currentDate = i === actions.length ? options.periodEnd : new Date(actions[i].timestamp);
       if (subFunc(currentDate) > previousDate) {
         return {
           result: isCurrentUserSysop ? 'notMeets' : 'notEnoughRights',
@@ -574,13 +577,13 @@ export default class User {
     return { result: 'meets' };
   }
 
-  async actionCountNotLess(config) {
-    config.periodStart = cc.util.prepareDate(config.periodStart);
-    config.periodEnd = cc.util.prepareDate(config.periodEnd, true);
+  async actionCountNotLess(options) {
+    options.periodStart = cc.util.prepareDate(options.periodStart);
+    options.periodEnd = cc.util.prepareDate(options.periodEnd, true);
 
-    const actions = await this.collectActions(config, config.value);
+    const actions = await this.collectActions(options, options.value);
 
-    if (actions.length < config.value) {
+    if (actions.length < options.value) {
       return {
         result: isCurrentUserSysop ? 'notMeets' : 'notEnoughRights',
         actionCount: actions.length,
@@ -595,9 +598,9 @@ export default class User {
     }
   }
 
-  async noActiveBlockBetweenDates(config) {
-    config.periodStart = cc.util.prepareDate(config.periodStart);
-    config.periodEnd = cc.util.prepareDate(config.periodEnd, true);
+  async noActiveBlockBetweenDates(options) {
+    options.periodStart = cc.util.prepareDate(options.periodStart);
+    options.periodEnd = cc.util.prepareDate(options.periodEnd, true);
 
     const data = await new mw.Api().get({
       action: 'query',
@@ -610,16 +613,16 @@ export default class User {
     if (!entry) return;
 
     let partiallyBlockedInSpecifiedNs = false;
-    if (config.ns &&
+    if (options.ns &&
       entry.restrictions &&
       entry.restrictions.namespaces &&
-      entry.restrictions.namespaces.includes(config.ns)
+      entry.restrictions.namespaces.includes(options.ns)
     ) {
      partiallyBlockedInSpecifiedNs = true;
     }
 
-    if (new Date(entry.timestamp) <= config.periodStart &&
-      (entry.expiry === 'infinity' || new Date(entry.expiry) > config.periodEnd) &&
+    if (new Date(entry.timestamp) <= options.periodStart &&
+      (entry.expiry === 'infinity' || new Date(entry.expiry) > options.periodEnd) &&
       (!entry.restrictions ||
         (Array.isArray(entry.restrictions) && !entry.restrictions.length) ||
         partiallyBlockedInSpecifiedNs

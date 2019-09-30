@@ -10,6 +10,8 @@ mw.loader.using([ 'mediawiki.api', 'mediawiki.util' ]).done(() => {
   cc.admin = admin;
   cc.arbcom = arbcom;
 
+  cc.customHandlers = [];
+
   cc.createMessage = (message, anchor) => {
     if (!message.icons) {
       message.icons = message.icon ? [message.icon] : [];
@@ -41,16 +43,12 @@ mw.loader.using([ 'mediawiki.api', 'mediawiki.util' ]).done(() => {
   };
 
   cc.getUser = (name) => {
-    cc.users = cc.users || [];
     if (!name) return;
-    let user;
-    if (cc.users[name]) {
-      user = cc.users[name];
-    } else {
-      user = new User(name);
-      cc.users[name] = user;
+    cc.users = cc.users || [];
+    if (!cc.users[name]) {
+      cc.users[name] = new User(name);
     }
-    return user;
+    return cc.users[name];
   };
 
   cc.extractCriteria = ($container) => (
@@ -100,7 +98,7 @@ mw.loader.using([ 'mediawiki.api', 'mediawiki.util' ]).done(() => {
   };
 
   cc.check = async (userNames, criteria, callback, doSummarize = true) => {
-    if (userNames && typeof userNames === 'string') {
+    if (typeof userNames === 'string') {
       userNames = [userNames];
     }
     const results = [];
@@ -118,7 +116,7 @@ mw.loader.using([ 'mediawiki.api', 'mediawiki.util' ]).done(() => {
   };
 
   cc.addHandler = (criterionName, handler) => {
-    User.prototype[criterionName] = handler;
+    cc.customHandlers[criterionName] = handler;
   };
 
   cc.currentUser = cc.getUser(mw.config.get('wgUserName'));
