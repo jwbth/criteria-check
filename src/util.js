@@ -2,7 +2,7 @@ import { subSeconds, subDays, subMonths, subYears } from 'date-fns';
 
 // Чтобы сделать возможным автоматическую генерации кода вызова этих функций без использования eval
 // (см. https://stackoverflow.com/questions/9464921/dynamically-call-local-function-in-javascript)
-const dateFns = { subDays, subMonths, subYears };
+const dateFns = { subDays, subMonths, subYears, addDays };
 
 const captureUserRegexp = /(?:Участник:|Участница:|Обсуждение_участника:|Обсуждение_участницы:|Служебная:Вклад\/)([^#\/]+)/;
 
@@ -10,20 +10,21 @@ export default {
   prepareDate: (date, isPeriodEnd) => {
     if (!date) return;
 
-    if (typeof date === 'object') {
-      // Мы ожидаем, что если дата дана как объект, то в ней уже позаботились о верном указании
-      // времени и делать время 23:59:59 не нужно. Но если это дата конца периода, она должна
-      // браться невключительно.
-      return isPeriodEnd ? subSeconds(date, 1) : date;
+    let addOneDay = false;
+    if (typeof date !== 'object') {
+      if (date.includes(':')) {
+        date += 'Z';
+      } else if (isPeriodEnd) {
+        addOneDay = true;
+      }
+      date = new Date(date);
     }
 
-    if (isPeriodEnd && !date.includes(':')) {
-      date += ' 23:59:59';
+    if (addOneDay) {
+      date = addDays(date, 1);
     }
-    if (date.includes(':')) {
-      date += 'Z';
-    }
-    return new Date(date);
+
+    return isPeriodEnd ? subSeconds(date, 1) : date;
   },
 
   ddmmyyyyToYyyymmdd: (ddmmyyyy) => {

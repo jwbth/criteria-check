@@ -55,7 +55,13 @@ export default class User {
       // встал на его имя, то, если участник, которому принадлежало имя прежде, соответствует
       // критериям, а новый нет, скрипт ошибается. Мы жертвуем возможностью такого стечения
       // обстоятельств по причине того, что его вероятность крайне мала.
-      if (!this.missing && !results.some((result) => result.result === 'notMeets')) break;
+      if (!this.missing &&
+        !results.some((result) => (
+          result.result === 'notMeets' || result.result === 'notEnoughRights'
+        ))
+      ) {
+        break;
+      }
 
       const dataRename = await new mw.Api().get({
         action: 'query',
@@ -92,7 +98,8 @@ export default class User {
             dataMove.query.logevents[0];
           const newUserNameMove = entryMove &&
             entryMove.comment &&
-            entryMove.comment.includes('Автоматическое переименование страницы при переименовании участника') &&
+            // Не всегда умещается, см. https://ru.wikipedia.org/w/index.php?title=Участник:Hausratte&action=history
+            entryMove.comment.includes('Автоматическое переим') &&
             entryMove.ns &&
             entryMove.ns === 2 &&
             entryMove.params &&
