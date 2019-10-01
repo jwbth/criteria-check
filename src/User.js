@@ -383,8 +383,8 @@ export default class User {
   }
 
   async editsBetweenDates(options) {
-    options.periodStart = cc.util.prepareDate(options.periodStart || options.start || options.startValue);
-    options.periodEnd = cc.util.prepareDate(options.periodEnd || options.end || options.endValue, true);
+    options.periodStart = cc.util.prepareDate(options.periodStart);
+    options.periodEnd = cc.util.prepareDate(options.periodEnd, true);
 
     const data = await new mw.Api().get({
       action: 'query',

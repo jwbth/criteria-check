@@ -230,14 +230,14 @@ export default {
         {
           text: criteria3Text,
           name: 'editsBetweenDates',
-          start: criteria3Start,
-          end: criteria3End,
+          periodStart: criteria3Start,
+          periodEnd: criteria3End,
         },
         {
           text: criteria4Text,
           name: 'editsBetweenDates',
-          start: criteria4Start,
-          end: criteria4End,
+          periodStart: criteria4Start,
+          periodEnd: criteria4End,
         },
       ];
     }
@@ -246,26 +246,22 @@ export default {
       if (!votingPeriod.start) return;
       votingPeriod.startTimeless = cc.util.prepareDate(votingPeriod.start.replace(/ [0-9:]+$/g, ''));
       votingPeriod.start = cc.util.prepareDate(votingPeriod.start);
-      votingPeriod.startNextDay = addDays(votingPeriod.start, 1);
-      votingPeriod.end = votingPeriod.end && cc.util.prepareDate(votingPeriod.end, true);
+      if (!votingPeriod.start) return;
+      votingPeriod.startNextDay = addDays(votingPeriod.startTimeless, 1);
+      votingPeriod.end = cc.util.prepareDate(votingPeriod.end, true);
       return votingPeriod;
     };
 
-    votingPeriod = $('.criteriaCheck-votingPeriod').data();
-    if (votingPeriod) {
-      votingPeriod = deriveDates(votingPeriod);
-      if (!votingPeriod.start) {
-        votingPeriod = null;
-      }
-    }
+    votingPeriod = Object.assign({}, $('.criteriaCheck-votingPeriod').data());
+    votingPeriod = deriveDates(votingPeriod);
 
     if (!votingPeriod &&
       // Удостоверяемся, что критерий тот, который нам нужен
       voterCriteria.length === 4 &&
       voterCriteria[3].name === 'editsBetweenDates' &&
-      (voterCriteria[3].end || voterCriteria[3].endValue)
+      voterCriteria[3].periodEnd
     ) {
-      votingPeriod = deriveDates({ start: voterCriteria[3].end || voterCriteria[3].endValue });
+      votingPeriod = deriveDates({ start: voterCriteria[3].periodEnd });
     }
 
     votingPeriodOk = votingPeriod && votingPeriod.start && votingPeriod.end;
