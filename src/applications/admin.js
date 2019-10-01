@@ -53,40 +53,32 @@ function extractVotes() {
     }).get();
 }
 
-function updateLinksBlock() {
-  $linksList.empty();
-  for (const link of linksBlockItems) {
-    if (!link.hide) {
-      const $li = $('<li>').appendTo($linksList);
-      $('<a>')
-        .text(link.text)
-        .click(link.func)
-        .appendTo($li);
-    }
-  }
+function updateButtonsBlock() {
+  $buttonsBlock.children().detach();
+  $(buttons).map((i, el) => el.hide ? null : el.$element[0]).appendTo($buttonsBlock);
 }
 
-function showLink(id) {
-  for (const link of linksBlockItems) {
-    if (id === link.func.name) {
-      link.hide = false;
+function showButton(id) {
+  for (const button of buttons) {
+    if (id === button.bindings.click[0].method.name) {
+      button.hide = false;
     }
   }
-  updateLinksBlock();
+  updateButtonsBlock();
 }
 
-function hideLink(id) {
-  for (const link of linksBlockItems) {
-    if (id === link.func.name) {
-      link.hide = true;
+function hideButton(id) {
+  for (const button of buttons) {
+    if (id === button.bindings.click[0].method.name) {
+      button.hide = true;
     }
   }
-  updateLinksBlock();
+  updateButtonsBlock();
 }
 
 let $criteriaBox;
-let linksBlockItems;
-let $linksList;
+let buttons;
+let $buttonsBlock;
 let rawCriteria = false;
 let candidate;
 let voterCriteria;
@@ -304,40 +296,43 @@ export default {
     cc.admin.resultsTable = resultsTable;
 
     // Создаём блок ссылок
-    const $linksBlock = $('<p>')
-      .addClass('criteriaCheck-linksBlock')
-      .addClass('hlist');
-    $linksList = $('<ul>').appendTo($linksBlock);
+    $buttonsBlock = $('<div>').addClass('criteriaCheck-buttonsBlock');
 
-    linksBlockItems = [];
+    buttons = [];
     if (mw.config.get('wgUserName')) {
-      linksBlockItems.push({
-        func: cc.admin.checkMe,
-        text: 'Проверить, соответствую ли я критериям',
+      const $button = new OO.ui.ButtonWidget({
+        label: 'Проверить, соответствую ли я требованиям',
+        classes: ['criteriaCheck-button'],
       });
+      $button.on('click', cc.admin.checkMe);
+      buttons.push($button);
     }
     if (mw.config.get('wgUserGroups').includes('bureaucrat') || cc.currentUser === candidate || true) {
-      linksBlockItems.push({
-        func: cc.admin.checkAll,
-        text: 'Проверить все голоса',
+      const $button = new OO.ui.ButtonWidget({
+        label: 'Проверить все голоса',
+        classes: ['criteriaCheck-button'],
       });
+      $button.on('click', cc.admin.checkAll);
+      buttons.push($button);
     }
     if (candidateCriteria &&
       (mw.config.get('wgUserGroups').includes('bureaucrat') || cc.currentUser === candidate || true)
     ) {
-      linksBlockItems.push({
-        func: cc.admin.checkCandidate,
-        text: 'Проверить соответствие кандидата требованиям для выдвижения',
+      const $button = new OO.ui.ButtonWidget({
+        label: 'Проверить соответствие кандидата требованиям для выдвижения',
+        classes: ['criteriaCheck-button'],
       });
+      $button.on('click', cc.admin.checkCandidate);
+      buttons.push($button);
     };
 
-    updateLinksBlock();
+    updateButtonsBlock();
 
-    $linksBlock.appendTo($criteriaBox);
+    $buttonsBlock.appendTo($criteriaBox);
   },
 
   checkMe: async () => {
-    hideLink('checkMe');
+    hideButton('checkMe');
     const $checkingMessage = cc.createMessage({
       icon: 'loading',
       text: 'Проверяем…',
@@ -357,17 +352,17 @@ export default {
         icons: ['error'],
         texts: ['Не удалось завершить проверку. См. подробности в консоли (F12 → Консоль). '],
       };
-      showLink('checkMe');
+      showButton('checkMe');
     }
 
     if (summary) {
       if (summary.conclusion === 'meets') {
         message = {
           icons: ['check'],
-          texts: ['Ура, вы соответствуете критериям и можете голосовать. '],
+          texts: ['Ура, вы соответствуете требованиям и можете голосовать. '],
         };
       } else if (summary.conclusion === 'notMeets') {
-        let text = `К сожалению, вы не соответствуете критерию: <em>${summary.firstFailedResult.criterion.text}</em>. `;
+        let text = `К сожалению, вы не соответствуете требованию: <em>${summary.firstFailedResult.criterion.text}</em>. `;
         if (summary.firstFailedResult.criterion.name === 'editCountNotLess') {
           text += `У вас только ${summary.firstFailedResult.editCount} правок. `;
         }
@@ -378,7 +373,7 @@ export default {
       } else if (summary.conclusion === 'possiblyMeets') {
         message.icons = ['help'];
         for (const result of summary.results.filter(cc.util.otherThanMeets)) {
-          let text = `Вы можете не соответствовать критерию: <em>${result.criterion.text}</em>. `;
+          let text = `Вы можете не соответствовать требованию: <em>${result.criterion.text}</em>. `;
           if (result.criterion.name === 'editCountNotLess') {
             text += `У вас ${result.editCount} правок, но, согласно <a href="https://ru.wikipedia.org/wiki/Википедия:Правила_выборов_администраторов_и_бюрократов#Кто_может_голосовать_на_выборах_бюрократов_и_администраторов">правилам</a>, незначительные правки не учитываются при подсчёте. Требуется ручной подсчёт. `;
           }
@@ -405,7 +400,7 @@ export default {
   },
 
   checkAll: async () => {
-    hideLink('checkAll');
+    hideButton('checkAll');
     $('.criteriaCheck-message').filter(function () {
       return !$(this).closest($criteriaBox).length;
     }).remove();
@@ -503,7 +498,7 @@ export default {
           };
           fitsOtherCriteria = false;
         } else if (summary.conclusion === 'notMeets') {
-          let text = `Участник не соответствует критерию: <em>${summary.firstFailedResult.criterion.text}</em>. `;
+          let text = `Участник не соответствует требованию: <em>${summary.firstFailedResult.criterion.text}</em>. `;
           if (summary.firstFailedResult.criterion.name === 'editCountNotLess') {
             text += `У участника только ${summary.firstFailedResult.editCount} правок. `;
           }
@@ -514,7 +509,7 @@ export default {
         } else if (summary.conclusion === 'possiblyMeets') {
           message.icons = ['help'];
           for (const result of summary.results.filter(cc.util.otherThanMeets)) {
-            let text = `Участник может не соответствовать критерию: <em>${result.criterion.text}</em>. `;
+            let text = `Участник может не соответствовать требованию: <em>${result.criterion.text}</em>. `;
             if (result.criterion.name === 'editCountNotLess') {
               text += `У участника ${result.editCount} правок. `;
             }
@@ -539,7 +534,7 @@ export default {
         const logLink = mw.util.getUrl('Служебная:Журналы', {
           page: 'Участник:' + vote.author.nameWhenVoted,
         });
-        message.texts.push(`Соответствие критериям определялось для учётной записи ${vote.author.name}, в которую <a href="${logLink}">была переименована</a> учётная запись ${vote.author.nameWhenVoted}.`);
+        message.texts.push(`Соответствие требованиям определялось для учётной записи ${vote.author.name}, в которую <a href="${logLink}">была переименована</a> учётная запись ${vote.author.nameWhenVoted}.`);
       }
 
       if (votingPeriodOk && !vote.date) {
@@ -553,7 +548,7 @@ export default {
       }
 
       if (category === 'possiblyMeets' && fitsOtherCriteria) {
-        message.texts[message.texts.length - 1] += 'Остальным критериям участник соответствует. ';
+        message.texts[message.texts.length - 1] += 'Остальным требованиям участник соответствует. ';
       }
       message.icons = cc.util.removeDuplicates(message.icons);
       message.accented = true;
@@ -578,7 +573,7 @@ export default {
     let text = 'Проверка завершена. ';
     if (votes.length) {
       if (rawCriteria) {
-        text += 'Не были найдены метаданные о критериях, поэтому они извлекались прямо из текста, что могло привести к ошибкам (к примеру, неизвестно время начала голосования, поэтому все правки в день начала включались при определении соответствия 1-му и 4-му критерию). ';
+        text += 'Не были найдены метаданные о требованиях, поэтому они извлекались прямо из текста, что могло привести к ошибкам (к примеру, неизвестно время начала голосования, поэтому все правки в день начала включались при определении соответствия 1-му и 4-му требованию). ';
       }
       if (!votingPeriodOk) {
         text += 'Не были найдены корректные метаданные о дате начала и конца голосования, поэтому время подачи голосов не проверялось. ';
@@ -591,7 +586,7 @@ export default {
       icons.push('error');
       const userList = formUserList(votesSummary.error);
       text += `Не удалось проверить ${votesSummary.error.length} ${cc.util.plural(votesSummary.error.length, 'голос', 'голоса', 'голосов')}: ${userList}. `;
-      showLink('checkAll');
+      showButton('checkAll');
     }
     if (votesSummary.notMeets.length) {
       icons.push('close');
@@ -639,7 +634,7 @@ export default {
   },
 
   checkCandidate: async () => {
-    hideLink('checkCandidate');
+    hideButton('checkCandidate');
     const $checkingMessage = cc.createMessage({
       icon: 'loading',
       text: 'Проверяем кандидата…',
@@ -660,7 +655,7 @@ export default {
         icons: ['error'],
         texts: ['Не удалось завершить проверку. См. подробности в консоли (F12 → Консоль). '],
       };
-      showLink('checkCandidate');
+      showButton('checkCandidate');
     }
 
     if (summary) {
@@ -692,7 +687,7 @@ export default {
             }
             message.texts.push(text);
           } else if (result.result === 'possiblyMeets') {
-            let text = `Кандидат может не соответствовать критерию: <em>${result.criterion.text}</em>. `;
+            let text = `Кандидат может не соответствовать требованию: <em>${result.criterion.text}</em>. `;
             if (result.criterion.name === 'hadFlagFor') {
               const distance = period % (1000 * 60 * 60 * 24);
               text += `Кандадат обладал флагом ${result.flag} в течение ${plural(distance, 'дня', 'дней', 'дней')}. `;

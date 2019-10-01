@@ -38,7 +38,7 @@ export default class User {
     } else if (cc.customHandlers[criterion.name]) {
       result = await cc.customHandlers[criterion.name](this, options);
     } else {
-      throw new Error(`Не найден критерий ${criterion.name}.`);
+      throw new Error(`Не найден тип критерия ${criterion.name}.`);
     }
     result.user = this;
     result.criterion = criterion;
@@ -138,7 +138,8 @@ export default class User {
       }).then((data) => {
         const entry = data && data.query && data.query.users && data.query.users[0];
         if (entry && entry.missing) {
-          // Если критериев, требующих получения users, нет, это свойство останется незаполненным
+          // Если критериев, требующих получения списка users, нет, это свойство останется
+          // незаполненным
           this.missing = true;
         }
         return entry;
@@ -298,7 +299,7 @@ export default class User {
   }
 
 
-  /* Функции критериев */
+  /* Функции типов критериев */
 
   async editCountNotLess(options) {
     options.periodStart = cc.util.prepareDate(options.periodStart);

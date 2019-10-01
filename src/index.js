@@ -5,7 +5,7 @@ import User from './User';
 import admin from './applications/admin';
 import arbcom from './applications/arbcom';
 
-mw.loader.using([ 'mediawiki.api', 'mediawiki.util' ]).done(() => {
+mw.loader.using([ 'mediawiki.api', 'mediawiki.util', 'oojs', 'oojs-ui' ]).done(() => {
   cc.util = util;
   cc.admin = admin;
   cc.arbcom = arbcom;
@@ -80,7 +80,7 @@ mw.loader.using([ 'mediawiki.api', 'mediawiki.util' ]).done(() => {
       ) {
         conclusion = 'possiblyMeets';
       }
-      if (result.result === 'notEnoughRights' || result.result === 'needsManualCheck') {
+      if (['notEnoughRights', 'needsManualCheck'].includes(result.result)) {
         warnings.push(result.result);
       }
       if (result.overallEditCount === 0) {

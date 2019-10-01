@@ -11,9 +11,16 @@
   margin-top: -0.25em;
 }
 
-.criteriaCheck-linksBlock,
 .criteriaCheck-message-big {
   font-size: 120%;
+}
+
+.criteriaCheck-buttonsBlock {
+  margin: 0.5em 0;
+}
+
+.criteriaCheck-button {
+  margin-right: 0.5em;
 }
 
 .criteriaCheck-icon {
