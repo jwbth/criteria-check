@@ -6,21 +6,21 @@ export default {
   getVoterCriteria: (nominationStartDate) => [
     {
       text: 'стаж не менее трёх месяцев',
-      name: 'registrationDateNotLater',
+      type: 'registrationDateNotLater',
       // addDays, потому что трактовка с датой невключительно закреплена на основных страницах
       // выборов
       value: addDays(subMonths(nominationStartDate, 3), 1),
     },
     {
       text: 'не менее 500 действий к началу выдвижения кандидатов',
-      name: 'actionCountNotLess',
+      type: 'actionCountNotLess',
       value: 500,
       periodEnd: nominationStartDate,
       filterVotes: true,
     },
     {
       text: 'не менее 100 действий за последние полгода до начала выдвижения кандидатов',
-      name: 'actionCountNotLess',
+      type: 'actionCountNotLess',
       value: 100,
       periodStart: subMonths(nominationStartDate, 6),
       periodEnd: nominationStartDate,
@@ -31,19 +31,19 @@ export default {
   getCandidateCriteria: (nominationStartDate) => [
     {
       text: 'с момента регистрации в русской Википедии до момента начала номинации кандидатов прошло не менее 8 месяцев',
-      name: 'registrationDateNotLater',
+      type: 'registrationDateNotLater',
       // addDays, потому что эта трактовка закреплена на основных страницах выборов
       value: addDays(subMonths(nominationStartDate, 8), 1),
     },
     {
       text: 'сделал в русской Википедии не менее 2000 правок до момента начала номинации',
-      name: 'editCountNotLess',
+      type: 'editCountNotLess',
       value: 2000,
       periodEnd: nominationStartDate,
     },
     {
       text: 'Кандидатом в арбитры не может быть бессрочно заблокированный участник, а также участник, имеющий на момент начала выдвижения кандидатур блокировку, срок действия которой истекает после окончания процедуры обсуждения кандидатур арбитров',
-      name: 'noActiveBlockBetweenDates',
+      type: 'noActiveBlockBetweenDates',
       ns: 4,
       periodStart: nominationStartDate,
       periodEnd: addDays(nominationStartDate, 10),

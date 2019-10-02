@@ -26,19 +26,19 @@ export default class User {
     }
 
     const options = Object.assign({}, criterion);
-    delete options.name;
+    delete options.type;
     delete options.text;
     let result;
     if (criterion.needsManualCheck) {
       result = { result: 'needsManualCheck' };
     } else if (this.missing) {
       result = { result: 'userMissing' };
-    } else if (this[criterion.name]) {
-      result = await this[criterion.name](options);
-    } else if (cc.customHandlers[criterion.name]) {
-      result = await cc.customHandlers[criterion.name](this, options);
+    } else if (this[criterion.type]) {
+      result = await this[criterion.type](options);
+    } else if (cc.customHandlers[criterion.type]) {
+      result = await cc.customHandlers[criterion.type](this, options);
     } else {
-      throw new Error(`Не найден тип критерия ${criterion.name}.`);
+      throw new Error(`Не найден тип критерия ${criterion.type}.`);
     }
     result.user = this;
     result.criterion = criterion;

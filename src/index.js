@@ -62,7 +62,7 @@ mw.loader.using([ 'mediawiki.api', 'mediawiki.util', 'oojs', 'oojs-ui' ]).done((
       .map(function () {
         const data = Object.assign({}, $(this).data());
         data.text = $(this).text().replace(/[,;.]$/, '');
-        data.name = data.criterion;
+        data.type = data.criterion;
         delete data.criterion;
         return data;
       }).get()
@@ -120,8 +120,8 @@ mw.loader.using([ 'mediawiki.api', 'mediawiki.util', 'oojs', 'oojs-ui' ]).done((
     return results;
   };
 
-  cc.addHandler = (criterionName, handler) => {
-    cc.customHandlers[criterionName] = handler;
+  cc.addHandler = (criterionType, handler) => {
+    cc.customHandlers[criterionType] = handler;
   };
 
   cc.currentUser = cc.getUser(mw.config.get('wgUserName'));

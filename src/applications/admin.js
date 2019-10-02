@@ -92,14 +92,14 @@ export default {
   getAdminCandidateCriteria: (votingPeriod) => [
     {
       text: 'стаж регистрации в русскоязычном разделе Википедии не менее 6 месяцев',
-      name: 'registrationDateNotLater',
+      type: 'registrationDateNotLater',
       // Прибавляем один день согласно тому, как считается разница в критериях для голосующих и на
       // выборах в АК
       value: subMonths(votingPeriod.startNextDay, 6),
     },
     {
       text: 'не менее 1000 правок',
-      name: 'editCountNotLess',
+      type: 'editCountNotLess',
       value: 1000,
       periodEnd: votingPeriod.start,
     },
@@ -109,7 +109,7 @@ export default {
     },
     {
       text: 'не лишённый полномочий администратора в последние 3 месяца',
-      name: 'notLostFlagInLast',
+      type: 'notLostFlagInLast',
       flag: 'sysop',
       value: 3,
       unit: 'month',
@@ -120,20 +120,20 @@ export default {
   getBureaucratCandidateCriteria: (votingPeriod) => [
     {
       text: 'стаж регистрации в русскоязычном разделе Википедии не менее 2 лет',
-      name: 'registrationDateNotLater',
+      type: 'registrationDateNotLater',
       // Прибавляем один день согласно тому, как считается разница в критериях для голосующих и на
       // выборах в АК
       value: addDays(subMonths(votingPeriod.startNextDay, 2), 1),
     },
     {
       text: 'не менее 2000 правок',
-      name: 'editCountNotLess',
+      type: 'editCountNotLess',
       value: 2000,
       periodEnd: votingPeriod.start,
     },
     {
       text: 'выполнявший обязанности администратора Википедии либо арбитра в течение не менее полугода до момента выдвижения',
-      name: 'hadFlagFor',
+      type: 'hadFlagFor',
       flags: ['sysop', 'arbcom'],
       value: 6,
       unit: 'month',
@@ -141,7 +141,7 @@ export default {
     },
     {
       text: 'не имевший за последний год периодов неактивности в русской Википедии длительностью более 3 месяцев',
-      name: 'notInactiveFor',
+      type: 'notInactiveFor',
       value: 3,
       unit: 'month',
       periodStart: subYears(votingPeriod.startNextDay, 1),
@@ -158,7 +158,7 @@ export default {
     },
     {
       text: 'не лишённый полномочий бюрократа в последние 3 месяца',
-      name: 'notLostFlagInLast',
+      type: 'notLostFlagInLast',
       flag: 'bureaucrat',
       value: 3,
       unit: 'month',
@@ -208,7 +208,7 @@ export default {
       voterCriteria = [
         {
           text: criteria1Text,
-          name: 'editCountNotLess',
+          type: 'editCountNotLess',
           ns: 0,
           value: criteria1Value,
           periodEnd: criteria4End,
@@ -216,18 +216,18 @@ export default {
         },
         {
           text: criteria2Text,
-          name: 'registrationDateNotLater',
+          type: 'registrationDateNotLater',
           value: criteria2Value,
         },
         {
           text: criteria3Text,
-          name: 'editsBetweenDates',
+          type: 'editsBetweenDates',
           periodStart: criteria3Start,
           periodEnd: criteria3End,
         },
         {
           text: criteria4Text,
-          name: 'editsBetweenDates',
+          type: 'editsBetweenDates',
           periodStart: criteria4Start,
           periodEnd: criteria4End,
         },
@@ -250,7 +250,7 @@ export default {
     if (!votingPeriod &&
       // Удостоверяемся, что критерий тот, который нам нужен
       voterCriteria.length === 4 &&
-      voterCriteria[3].name === 'editsBetweenDates' &&
+      voterCriteria[3].type === 'editsBetweenDates' &&
       voterCriteria[3].periodEnd
     ) {
       votingPeriod = deriveDates({ start: voterCriteria[3].periodEnd });
@@ -363,7 +363,7 @@ export default {
         };
       } else if (summary.conclusion === 'notMeets') {
         let text = `К сожалению, вы не соответствуете требованию: <em>${summary.firstFailedResult.criterion.text}</em>. `;
-        if (summary.firstFailedResult.criterion.name === 'editCountNotLess') {
+        if (summary.firstFailedResult.criterion.type === 'editCountNotLess') {
           text += `У вас только ${summary.firstFailedResult.editCount} правок. `;
         }
         message = {
@@ -374,7 +374,7 @@ export default {
         message.icons = ['help'];
         for (const result of summary.results.filter(cc.util.otherThanMeets)) {
           let text = `Вы можете не соответствовать требованию: <em>${result.criterion.text}</em>. `;
-          if (result.criterion.name === 'editCountNotLess') {
+          if (result.criterion.type === 'editCountNotLess') {
             text += `У вас ${result.editCount} правок, но, согласно <a href="https://ru.wikipedia.org/wiki/Википедия:Правила_выборов_администраторов_и_бюрократов#Кто_может_голосовать_на_выборах_бюрократов_и_администраторов">правилам</a>, незначительные правки не учитываются при подсчёте. Требуется ручной подсчёт. `;
           }
           message.texts.push(text);
@@ -499,7 +499,7 @@ export default {
           fitsOtherCriteria = false;
         } else if (summary.conclusion === 'notMeets') {
           let text = `Участник не соответствует требованию: <em>${summary.firstFailedResult.criterion.text}</em>. `;
-          if (summary.firstFailedResult.criterion.name === 'editCountNotLess') {
+          if (summary.firstFailedResult.criterion.type === 'editCountNotLess') {
             text += `У участника только ${summary.firstFailedResult.editCount} правок. `;
           }
           message = {
@@ -510,7 +510,7 @@ export default {
           message.icons = ['help'];
           for (const result of summary.results.filter(cc.util.otherThanMeets)) {
             let text = `Участник может не соответствовать требованию: <em>${result.criterion.text}</em>. `;
-            if (result.criterion.name === 'editCountNotLess') {
+            if (result.criterion.type === 'editCountNotLess') {
               text += `У участника ${result.editCount} правок. `;
             }
             text += 'Необходима ручная проверка. ';
@@ -666,7 +666,7 @@ export default {
         };
       } else if (summary.conclusion === 'notMeets') {
         let text = `Кандидат не соответствует требованию: <em>${summary.firstFailedResult.criterion.text}</em>. `;
-        if (summary.firstFailedResult.criterion.name === 'editCountNotLess') {
+        if (summary.firstFailedResult.criterion.type === 'editCountNotLess') {
           text += `У него только ${summary.firstFailedResult.editCount} правок. `;
         }
         message = {
@@ -688,7 +688,7 @@ export default {
             message.texts.push(text);
           } else if (result.result === 'possiblyMeets') {
             let text = `Кандидат может не соответствовать требованию: <em>${result.criterion.text}</em>. `;
-            if (result.criterion.name === 'hadFlagFor') {
+            if (result.criterion.type === 'hadFlagFor') {
               const distance = period % (1000 * 60 * 60 * 24);
               text += `Кандадат обладал флагом ${result.flag} в течение ${plural(distance, 'дня', 'дней', 'дней')}. `;
             }
