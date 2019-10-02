@@ -1,3 +1,7 @@
+.criteriaCheck-message-withText {
+  display: flex;
+}
+
 .criteriaCheck-message-accented {
   font-weight: bold;
 }
@@ -31,7 +35,11 @@
   background-size: 20px 20px;
   background-repeat: no-repeat;
   margin-right: 0.5em;
-  vertical-align: middle;
+  vertical-align: top;
+}
+
+.criteriaCheck-message-withText .criteriaCheck-icon {
+  flex-shrink: 0;
 }
 
 .criteriaCheck-icon + .criteriaCheck-icon {

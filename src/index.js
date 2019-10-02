@@ -31,8 +31,13 @@ mw.loader.using([ 'mediawiki.api', 'mediawiki.util', 'oojs', 'oojs-ui' ]).done((
     const $el = $(text ? '<div>' : '<span>')
       .addClass('criteriaCheck-message')
       .attr('id', anchor)
-      .append($icons)
-      .append(text);
+      .append($icons);
+    if (text) {
+      const $text = $('<span>').append(text);
+      $el
+        .addClass('criteriaCheck-message-withText')
+        .append($text);
+    }
     if (message.accented) {
       $el.addClass('criteriaCheck-message-accented');
     }
@@ -131,8 +136,6 @@ mw.loader.using([ 'mediawiki.api', 'mediawiki.util', 'oojs', 'oojs-ui' ]).done((
       position: 'absolute',
       top: -10000,
     })
-    .append(
-      cc.createMessage({ icons: ['check', 'close', 'help', 'error', 'loading', 'warning'] })
-    )
+    .append(cc.createMessage({ icons: ['check', 'close', 'help', 'error', 'loading', 'warning'] }))
     .appendTo('body');
 });
