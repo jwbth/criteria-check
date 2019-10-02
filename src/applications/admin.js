@@ -95,7 +95,7 @@ export default {
       type: 'registrationDateNotLater',
       // Прибавляем один день согласно тому, как считается разница в критериях для голосующих и на
       // выборах в АК
-      value: subMonths(votingPeriod.startNextDay, 6),
+      value: addDays(subMonths(votingPeriod.startTimeless, 6)),
     },
     {
       text: 'не менее 1000 правок',
@@ -113,7 +113,7 @@ export default {
       flag: 'sysop',
       value: 3,
       unit: 'month',
-      referenceDate: votingPeriod.startNextDay,
+      referenceDate: votingPeriod.startTimeless,
     },
   ],
 
@@ -123,7 +123,7 @@ export default {
       type: 'registrationDateNotLater',
       // Прибавляем один день согласно тому, как считается разница в критериях для голосующих и на
       // выборах в АК
-      value: addDays(subMonths(votingPeriod.startNextDay, 2), 1),
+      value: addDays(subYears(votingPeriod.startTimeless, 2), 1),
     },
     {
       text: 'не менее 2000 правок',
@@ -137,15 +137,15 @@ export default {
       flags: ['sysop', 'arbcom'],
       value: 6,
       unit: 'month',
-      referenceDate: votingPeriod.startNextDay,
+      referenceDate: votingPeriod.startTimeless,
     },
     {
       text: 'не имевший за последний год периодов неактивности в русской Википедии длительностью более 3 месяцев',
       type: 'notInactiveFor',
       value: 3,
       unit: 'month',
-      periodStart: subYears(votingPeriod.startNextDay, 1),
-      periodEnd: votingPeriod.startNextDay,
+      periodStart: subYears(votingPeriod.startTimeless, 1),
+      periodEnd: votingPeriod.startTimeless,
     },
     {
       text: 'не имевший за последние полгода до момента выдвижения взысканий, наложенных Арбитражным комитетом по итогам рассмотрения исков против кандидата',
@@ -162,7 +162,7 @@ export default {
       flag: 'bureaucrat',
       value: 3,
       unit: 'month',
-      referenceDate: votingPeriod.startNextDay,
+      referenceDate: votingPeriod.startTimeless,
     },
   ],
 
@@ -239,7 +239,6 @@ export default {
       votingPeriod.startTimeless = cc.util.prepareDate(votingPeriod.start.replace(/ [0-9:]+$/g, ''));
       votingPeriod.start = cc.util.prepareDate(votingPeriod.start);
       if (!votingPeriod.start) return;
-      votingPeriod.startNextDay = addDays(votingPeriod.startTimeless, 1);
       votingPeriod.end = cc.util.prepareDate(votingPeriod.end, true);
       return votingPeriod;
     };
