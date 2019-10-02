@@ -569,8 +569,8 @@ export default class User {
       if (subFunc(currentDate) > previousDate) {
         return {
           result: isCurrentUserSysop ? 'notMeets' : 'notEnoughRights',
-          inactivePeriodStart: previousDate,
-          inactivePeriodEnd: currentDate,
+          inactivityPeriodStart: previousDate,
+          inactivityPeriodEnd: currentDate,
         };
       }
     }
