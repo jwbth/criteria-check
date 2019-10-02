@@ -19,7 +19,7 @@ export default class User {
 
   async checkOne(criterion) {
     if (!cc.apiRateLimit) {
-      const entry = await cc.currentUser.getUserInfo();
+      const entry = cc.currentUser && await cc.currentUser.getUserInfo();
       cc.apiRateLimit = entry && entry.rights && entry.rights.includes('apihighlimits')
         ? 5000
         : 500;
