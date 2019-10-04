@@ -306,7 +306,7 @@ export default {
       $button.on('click', cc.admin.checkMe);
       buttons.push($button);
     }
-    if (mw.config.get('wgUserGroups').includes('bureaucrat') || cc.currentUser === candidate || true) {
+    if (mw.config.get('wgUserGroups').includes('bureaucrat') || cc.currentUser === candidate) {
       const $button = new OO.ui.ButtonWidget({
         label: 'Проверить все голоса',
         classes: ['criteriaCheck-button'],
@@ -315,7 +315,7 @@ export default {
       buttons.push($button);
     }
     if (candidateCriteria &&
-      (mw.config.get('wgUserGroups').includes('bureaucrat') || cc.currentUser === candidate || true)
+      (mw.config.get('wgUserGroups').includes('bureaucrat') || cc.currentUser === candidate)
     ) {
       const $button = new OO.ui.ButtonWidget({
         label: 'Проверить соответствие кандидата требованиям для выдвижения',
