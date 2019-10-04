@@ -95,7 +95,7 @@ export default {
       type: 'registrationDateNotLater',
       // Прибавляем один день согласно тому, как считается разница в критериях для голосующих и на
       // выборах в АК
-      value: addDays(subMonths(votingPeriod.startTimeless, 6)),
+      value: addDays(subMonths(votingPeriod.startTimeless, 6), 1),
     },
     {
       text: 'не менее 1000 правок',

@@ -102,9 +102,9 @@ export default {
       'thank',
     ];
     return !(notCountedActions.includes(event.action) ||
-        (event.type === 'create' && event.action === 'create') ||
-        event.type === 'newusers'
-      );
+      (event.type === 'create' && event.action === 'create') ||
+      event.type === 'newusers'
+    );
   },
 
   createSubFunc: (value, unit) => {

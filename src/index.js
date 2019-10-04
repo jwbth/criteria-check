@@ -131,11 +131,12 @@ mw.loader.using([ 'mediawiki.api', 'mediawiki.util', 'oojs', 'oojs-ui' ]).done((
   }
 
   // Предзагружаем иконки
-  $('<div>')
+  const $div = $('<div>')
     .css({
       position: 'absolute',
       top: -10000,
     })
     .append(cc.createMessage({ icons: ['check', 'close', 'help', 'error', 'loading', 'warning'] }))
-    .appendTo('body');
+    .appendTo('body')
+  setTimeout(() => { $div.remove() }, 1);
 });
